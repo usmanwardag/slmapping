@@ -10,6 +10,7 @@
     <link rel="icon" href="../../favicon.ico">
 
     <title>Visualisations</title>
+   <link href="https://fonts.googleapis.com/css?family=Indie+Flower" rel="stylesheet">
 
     <!-- Bootstrap core CSS -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
@@ -22,6 +23,13 @@
 
 body {
   font: 10px sans-serif;
+}
+
+.description {
+  font-size: 20px;
+  font-family: 'Indie Flower', cursive;
+  text-align: center;
+  margin-top: 10px;
 }
 
 .axis path,
@@ -321,3 +329,8 @@ function updateData(display) {
 }
 
 </script>
+<div class="description">
+  <div class="col-lg-offset-3 col-lg-6">
+  <p>The visualisation extracts the most similar neighbours in the lexical space and see how far off they are in the semantic space. </p>
+  </div>
+</div>
