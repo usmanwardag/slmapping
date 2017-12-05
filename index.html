@@ -48,12 +48,17 @@ body {
 }
 
 .tooltip {
-    position: absolute;
-    font-size: 12px;
-    width:  auto;
-    height: auto;
-    pointer-events: none;
-    background-color: white;
+  position: absolute;
+  font-size: 12px;
+  width:  auto;
+  height: auto;
+  pointer-events: none;
+  background-color: white;
+}
+
+.check {
+  font-size: 15px;
+  font-style: normal;
 }
 
 </style>
@@ -81,19 +86,35 @@ body {
 var search = document.getElementById("search");
 var word = document.getElementById("word");
 var help = document.getElementById("help");
-var thresh = 0.998;
+var check1;
+var check2;
+
+window.onload = function() {
+  check1 = document.getElementById("check1");
+  check2 = document.getElementById("check2");
+}
+
+console.log(check1);
 
 search.addEventListener("click", function() { 
 
     if (word.value == ''){
-      help.innerHTML = '<font color="red">Input was empty. </font><a href="data/supported_words.csv" target="blank">Select from one of the supported words here.</a>';
+      help.innerHTML = `
+        <font color="red">Input was empty. </font>
+        <a href="data/supported_words.csv" target="blank">
+        Select from one of the supported words here.</a>
+      `;
       return;
     }
     else {
-      help.innerHTML = '<a href="data/supported_words.csv" target="blank">List of supported words</a>';
+      help.innerHTML =`
+        <a href="data/supported_words.csv" target="blank">
+        List of supported words</a>
+      `;
     }
 
     var map = {};
+    var map_inner = {};
     
     d3.csv("data/neighbors.csv", function(error, data) {
       for (var i=0; i<data.length; i++) {
@@ -126,13 +147,22 @@ search.addEventListener("click", function() {
       neighbors = Object.keys(map);
 
       if (neighbors.length == 0){
-        help.innerHTML = '<font color="red">The entered word is not in our database yet. </font><a href="data/supported_words.csv" target="blank">Select from one of the supported words here.</a>';
+        help.innerHTML = `
+          <font color="red">The entered word is not in our database yet. </font>
+          <a href="data/supported_words.csv" target="blank">
+          Select from one of the supported words here.</a>
+        `;
+
         return;
       }
 
       for (var i=0; i<neighbors.length; i++){
 
         neighbor = map[neighbors[i]];
+
+        if ((neighbors[i].length > word.value.length) && (check1.checked)){
+          continue;
+        }
 
         lex = 0;
         if (neighbor['lexical_score'] == 1){
@@ -165,13 +195,72 @@ search.addEventListener("click", function() {
           'xCord': x, 
           'yCord': y,
           'score': neighbor['semantic_score'],
-          'space': 'Semantic'
+          'space': 'Lexical -> Semantic'
         });
       }
 
-      //console.log(display);
-      updateData(display);
-    
+      if (check2.checked) {
+        d3.csv("data/semantic_neighbors.csv", function(error, data_inner) {
+          for (var i=0; i<data_inner.length; i++) {
+            target = data_inner[i]['word'];
+
+            if (word.value != target) {
+              continue;
+            }
+
+            var split_data = data_inner[i]['neighbors'].split(' ');
+
+            for (var j=0; j<split_data.length; j++){
+              neighbor = split_data[j].split(':')[0];
+              sem = split_data[j].split(':')[1];
+
+              map_inner[neighbor] = {}
+              map_inner[neighbor]['semantic_score'] = sem;
+            }
+
+            if (word.value == target) {
+              break;
+            }
+          }
+
+          neighbors_inner = Object.keys(map_inner);
+
+          for (var i=0; i<neighbors_inner.length; i++){
+            neighbor = map_inner[neighbors_inner[i]];
+
+            // Skip elements that are in lexical space and have 
+            // already been covered.
+            if (neighbors.indexOf(neighbors_inner[i]) >= 0) {
+              continue;
+            }
+
+            console.log(check1.checked);
+            if ((neighbors_inner[i].length > word.value.length) && (check1.checked)){
+              continue;
+            }
+
+            sem = 1 - neighbor['semantic_score'];
+            var angle = Math.random()*Math.PI*2;
+
+            x = (Math.cos(angle)*sem) + x_offsets[1];
+            y = (Math.sin(angle)*sem) + y_offsets[1];
+
+            display.push({
+              'word': neighbors_inner[i],
+              'xCord': x, 
+              'yCord': y,
+              'score': neighbor['semantic_score'],
+              'space': 'Semantic'
+            });
+          }
+
+          updateData(display);
+        });        
+      }
+
+      if (!check2.checked){
+        updateData(display);
+      }
     });
 
 });
@@ -203,7 +292,6 @@ var svg = d3.select("body").append("svg")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 d3.csv("data/data.csv", function(error, data) {
-  console.log(data);
   if (error) throw error;
 
   data.forEach(function(d) {
@@ -246,8 +334,6 @@ function updateData(display) {
 
   var y = d3.scale.linear()
     .range([height, 0]);
-
-  console.log(display);
 
   //if (error) throw error;
 
@@ -329,8 +415,26 @@ function updateData(display) {
 }
 
 </script>
+<div class="check">
+  <div class="row">
+    <div class="col-lg-offset-3 col-lg-3">
+      <label class="form-check-label">
+        <input id="check1" type="checkbox" class="form-check-input">
+        Only find smaller length neighbors.
+      </label>
+    </div>
+    <div class="col-lg-offset-0 col-lg-3">
+      <label class="form-check-label">
+        <input id="check2" type="checkbox" class="form-check-input">
+        Also show normal semantic neighbors.
+      </label>
+    </div>
+  </div>
+</div>
 <div class="description">
   <div class="col-lg-offset-3 col-lg-6">
-  <p>The visualisation extracts the most similar neighbours in the lexical space and checks how far off they are in the semantic space. </p>
+    <p>The visualisation extracts the most similar neighbours in the 
+    lexical space and checks how far off they are in the semantic space. 
+    </p>
   </div>
 </div>
