@@ -105,7 +105,7 @@ search.addEventListener("click", function() {
 
           var split_data = data[i]['neighbors'].split(' ');
 
-          for (var j=1; j<split_data.length; j++){
+          for (var j=0; j<split_data.length; j++){
             neighbor = split_data[j].split(':')[0];
             lex = split_data[j].split(':')[1];
             sem = split_data[j].split(':')[2];
