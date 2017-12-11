@@ -124,7 +124,7 @@ function mainTask(){
           'xCord': x, 
           'yCord': y,
           'score': neighbor['semantic_score'],
-          'space': 'Lexical -> Semantic'
+          'space': 'Semantic'
         });
       }
 
@@ -179,7 +179,7 @@ function mainTask(){
               'xCord': x, 
               'yCord': y,
               'score': neighbor['semantic_score'],
-              'space': 'Semantic'
+              'space': 'Normal'
             });
           }
 
